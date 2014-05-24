@@ -38,7 +38,7 @@ class FM_UI():
                 force, sep = self.sep_and_force(defl, zsens)
                 force, sep = self.zero(force, sep)
         
-        #force_to_fit, sep_to_fit = self.JKR_fitmap(force, sep)
+        force_to_fit, sep_to_fit = self.JKR_fitmap(force, sep)
         plt.plot(sep, force)
         plt.show()
                    
@@ -128,7 +128,7 @@ class FM_UI():
         
 
         
-    def flat_average(self, y):
+    def flat_stats(self, y):
         #calculate an average deflection value using the 85 - 92 % of data points
         left_limit = int(LEFT_TAIL_LIMIT*len(y))
         right_limit = int(RIGHT_TAIL_LIMIT*len(y))
@@ -138,7 +138,12 @@ class FM_UI():
             average = average + y[i]
         average = average/float(len(y)*0.17)
         
-        return average
+        variance = 0.0
+        for i in range(left_limit, right_limit):
+            variance += (average - y[i])**2
+        variance = variance/(right_limit - left_limit)
+        
+        return average, variance
     
 
 
@@ -154,7 +159,7 @@ class FM_UI():
             dV.append(new)
 
         #calculate an average deflV for the tail near the event
-        avg = self.flat_average(d)
+        avg, variance = self.flat_stats(d)
 
         #make a list of numbers from which invols may be calculated. uses top 1/3 of the curve
         count = dV.index(max(dV))
@@ -228,7 +233,7 @@ class FM_UI():
         ##       and sep at the surface is zero
         
         ##zero the force
-        forceaverage = self.flat_average(force)
+        forceaverage, variance = self.flat_stats(force)
         
         newforce = []
         for i in force:
@@ -237,9 +242,6 @@ class FM_UI():
         
         ##zero the sep
         smallest_point = self.find_nearest(newforce, max(newforce)/3.0)
-        print "\n\nforce", max(newforce)
-        print 'point',smallest_point
-        print 'size',len(sep)
         
         total = 0
         for i in range(0, smallest_point):
@@ -253,16 +255,34 @@ class FM_UI():
             
         return newforce, newsep
             
+    
         
-        
-    def JKR_fitmap(self, F, s):
+    def JKR_fitmap(self, force, sep):
         # finds region of interest for JKR fit.
         # defines region of interest as the region from where slope starts to change to where dF/ds changes sign
-        left_limit = int(LEFT_TAIL_LIMIT*len(d))
-        right_limit = int(RIGHT_TAIL_LIMIT*len(d))
-
-        indexlist = np.arange(left_limit, right_limit)
+        average, variance = self.flat_stats(force)
+        left_limit = int(LEFT_TAIL_LIMIT*len(force))
         
+        sliding_average = 0
+        number_of_outliers = 0
+        while number_of_outliers < SLIDING_WINDOW_SIZE:
+            
+            total = 0
+            for i in range(left_limit - SLIDING_WINDOW_SIZE):
+                sliding_average += force[i]
+            sliding_average = sliding_average/SLIDING_WINDOW_SIZE
+            
+            left_limit += -1
+            
+            if sliding_average > average + (variance**0.5)*DETECTION_LIMIT:
+                number_of_outliers += 1
+            else:
+                number_of_outliers = 0
+        
+        print sep[left_limit]
+        
+        return force, sep
+
             
 
 if __name__ == "__main__":
