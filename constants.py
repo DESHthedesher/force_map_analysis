@@ -16,5 +16,5 @@ INVOLS = 138.63 #Defl InVols, nm/V
 #relating to data analysis parameters
 LEFT_TAIL_LIMIT = 0.75 #point the closest to the surface you trust the tip not to interact with the surface
 RIGHT_TAIL_LIMIT = 0.92 #point the farthest from the surface you trust not to be funny for all force curves
-SLIDING_WINDOW_SIZE = 50 #data points
+SLIDING_WINDOW_SIZE = 5 #data points
 DETECTION_LIMIT = 3 #number of STDEVS that constitite a "point which is probably off"

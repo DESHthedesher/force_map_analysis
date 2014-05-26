@@ -40,6 +40,7 @@ class FM_UI():
                 force, sep = self.zero(force, sep)
                 
         
+        self.differentiation(force, sep)
         force_to_fit, sep_to_fit = self.JKR_fitmap(force, sep)
         plt.plot(sep, force)
         plt.show()
@@ -177,7 +178,8 @@ class FM_UI():
                 break
 
         # find slope of contact region using least squares method
-        #intercept, slope = LSR.linefit_noError(z,d,involist)
+        intercept, slope = LSR.linefit_noError(z,d,involist)
+        #realinvols = slope*10**9
         
         sumx = 0.0
         sumy = 0.00
@@ -192,6 +194,7 @@ class FM_UI():
         slope = (sumx*sumy - len(involist)*sumxy)/(sumx**2 - (len(involist))*sumxx)
         
         realinvols = (1/slope)*10**9
+        
 
         # convert deflV back to nm using the correct value of realinVols
         d = []
@@ -285,6 +288,7 @@ class FM_UI():
         left_limit = int(LEFT_TAIL_LIMIT*len(force))
         
         dfds = []
+        smaller_sep = []
         for i in range(SLIDING_WINDOW_SIZE, left_limit):
             
             left_average_force = 0.0
@@ -305,7 +309,13 @@ class FM_UI():
             
             rise_over_run = (right_average_force - left_average_force)/(right_average_sep - left_average_sep)
             dfds.append(rise_over_run)
+            smaller_sep.append(sep[i])
+            print i
             
+        plt.plot(smaller_sep, dfds)
+        plt.show()
+        
+        
         
     def JKR_fitmap(self, force, sep):
         # finds region of interest for JKR fit.
