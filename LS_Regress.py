@@ -16,26 +16,28 @@ class LS_Regress():
     ###fit to the equation y = a + bx
     ###takes x, y, and a list of the indexes for the points to be fitted
     ###returns intercept, slope
+    
     def linefit_noError(self, x, y, indexlist):
         sumx = 0.0
         sumy = 0.0
         sumxy = 0.0
         sumxx = 0.0
-        N = len(indexlist)
+        N = float(len(indexlist))
 
         for i in indexlist:
             sumx += x[i]
+            sumxx += x[i]*x[i]
             sumy += y[i]
-            sumxy += x[i]*y[i]
-            sumxx += (x[i])**2
-
+            sumxy += y[i]*x[i]
+            
         delta = N*sumxx - sumx**2
-        a = (1/delta)*(sumy*sumxx - sumx*sumxy)
-        b = (1/delta)*(N*sumxx - sumx*sumy)
-
-	b = (sumx*sumy - sumxx*N)/(sumx**2 - sumxx*N)
-
-	return a, b
+        a = sumy*sumxx - sumx*sumxy
+        b = sumxy*N - sumy*sumx
+        
+        a = a/delta
+        b = b/delta
+            
+        return a, b
 
 if __name__ == "__main__":
     LS_Regress(None)
