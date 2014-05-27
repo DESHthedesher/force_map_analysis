@@ -40,7 +40,7 @@ class FM_UI():
                 force, sep = self.zero(force, sep)
                 
         
-        self.differentiation(force, sep)
+        self.JKR_fitmap(force, sep, zsens)
         force_to_fit, sep_to_fit = self.JKR_fitmap(force, sep)
         plt.plot(sep, force)
         plt.show()
@@ -281,67 +281,63 @@ class FM_UI():
         return force, sep
     
     
-    def differentiation(self, force, sep):
+    def differentiation(self, y, x):
         #creates a second curve of df/ds for the entire curve
         #this is calculated as the average change to the left and right of
         #a given data point. The average is taken over the value of SLIDING_WINDOW_SIZE
-        left_limit = int(LEFT_TAIL_LIMIT*len(force))
+        left_limit = int(LEFT_TAIL_LIMIT*len(x))
         
-        dfds = []
-        smaller_sep = []
+        dydx = []
+        smaller_x = []
         for i in range(SLIDING_WINDOW_SIZE, left_limit):
             
-            left_average_force = 0.0
-            left_average_sep = 0.0
+            left_average_y = 0.0
+            left_average_x = 0.0
             for k in range(i - SLIDING_WINDOW_SIZE, i):
-                left_average_force += force[k]
-                left_average_sep += sep[k]
-            left_average_force = left_average_force/SLIDING_WINDOW_SIZE
-            left_average_sep = left_average_sep/SLIDING_WINDOW_SIZE
+                left_average_y += y[k]
+                left_average_x += x[k]
+            left_average_y = left_average_y/SLIDING_WINDOW_SIZE
+            left_average_x = left_average_x/SLIDING_WINDOW_SIZE
             
-            right_average_force = 0.0
-            right_average_sep = 0.0
+            right_average_y = 0.0
+            right_average_x = 0.0
             for k in range(i, i + SLIDING_WINDOW_SIZE):
-                right_average_force += force[k]
-                right_average_sep += sep [k]
-            right_average_force = right_average_force/SLIDING_WINDOW_SIZE
-            right_average_sep = right_average_sep/SLIDING_WINDOW_SIZE
+                right_average_y += y[k]
+                right_average_x += x[k]
+            right_average_y = right_average_y/SLIDING_WINDOW_SIZE
+            right_average_x = right_average_x/SLIDING_WINDOW_SIZE
             
-            rise_over_run = (right_average_force - left_average_force)/(right_average_sep - left_average_sep)
-            dfds.append(rise_over_run)
-            smaller_sep.append(sep[i])
-            print i
+            rise_over_run = (right_average_y - left_average_y)/(right_average_x - left_average_x)
+            dydx.append(rise_over_run)
+            smaller_x.append(x[i])
             
-        plt.plot(smaller_sep, dfds)
-        plt.show()
+        return dydx, smaller_x
         
         
         
-    def JKR_fitmap(self, force, sep):
+    def JKR_fitmap(self, force, sep, zsens):
         # finds region of interest for JKR fit.
-        # defines region of interest as the region from where slope starts to change to where dF/ds changes sign
-        average, variance = self.flat_stats(force)
-        left_limit = int(LEFT_TAIL_LIMIT*len(force))
+        # defines region of interest as the region from where |slope| > 2stdev
+        # to where dF/ds changes sign
         
-        sliding_average = 0
+        dfdz, small_zsens = self.differentiation(force, zsens)
+        average, variance = self.flat_stats(dfdz)
+        
+        left_limit = len(dfdz) - 1
+        
         number_of_outliers = 0
-        while number_of_outliers < SLIDING_WINDOW_SIZE:
-            
-            total = 0
-            for i in range(left_limit - SLIDING_WINDOW_SIZE):
-                sliding_average += force[i]
-            sliding_average = sliding_average/SLIDING_WINDOW_SIZE
-            
+        while number_of_outliers < 3:
             left_limit += -1
             
-            if sliding_average > average + (variance**0.5)*DETECTION_LIMIT:
+            if dfdz[left_limit] > average + (variance**0.5)*DETECTION_LIMIT:
                 number_of_outliers += 1
             else:
                 number_of_outliers = 0
         
-        print sep[left_limit]
+        print small_zsens[left_limit]
         
-        return force, sep
+        plt.plot(small_zsens, dfdz)
+        plt.show()
 
             
 
