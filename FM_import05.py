@@ -28,6 +28,7 @@ class FM_UI():
         curve_array = self.fmap_namer()
         
         for i in curve_array:
+            print "****analyzing ",i[0],"*****\n\n\n"
             defl = self.data_import(i[1])
             zsens = self.data_import(i[2])
             
@@ -38,12 +39,14 @@ class FM_UI():
                 force, sep = self.sep_and_force(defl, zsens)
                 force, sep = self.baseline_correct(force, sep)
                 force, sep = self.zero(force, sep)
+                #force_fit, sep_fit = self.JKR_fitmap(force, sep, zsens)
+                force_fit, sep_fit = self.JKR_fitmap_expt(force, sep, zsens)
+                plt.plot(sep, force)
+                plt.plot(sep_fit,force_fit)
+                plt.show()
                 
-        
-        force_fit, sep_fit = self.JKR_fitmap(force, sep, zsens)
-        plt.plot(sep, force)
-        plt.plot(sep_fit,force_fit)
-        plt.show()
+                
+
                    
 
     #gets names of all complete ibw files in the folder
@@ -260,7 +263,44 @@ class FM_UI():
             
         return newforce, newsep
         
+    def three_plots(self, x1, y1, x2, y2, x3, y3):
+        ##Normalizes and plots three things at once
+        ##max[y] - min[y] = 1.0
+        print "plotting...."
         
+        a1 = 1.0/(max(y1)-min(y1))
+        a2 = 1.0/(max(y2)-min(y2))
+        a3 = 1.0/(max(y3)-min(y3))
+        
+        norm_y1 = []
+        for i in y1:
+            norm_y1.append(i*a1)
+            
+        norm_y2 = []
+        for i in y2:
+            norm_y2.append(i*a2 + 0.2)
+            
+        norm_y3 = []
+        for i in y3:
+            norm_y3.append(i*a3 + 1.3)
+            
+        norm_x1 = []
+        for i in x1:
+            norm_x1.append(-1*i)
+        
+        norm_x2 = []
+        for i in x2:
+            norm_x2.append(-1*i)
+            
+        norm_x3 = []
+        for i in x3:
+            norm_x3.append(-1*i)
+ 
+        
+        plt.plot(norm_x1, norm_y1)
+        plt.plot(norm_x2, norm_y2)
+        plt.plot(norm_x3, norm_y3)
+        plt.show()
         
     def baseline_correct(self, force, sep):
         #Corrects for slope in the baseline.
@@ -314,6 +354,69 @@ class FM_UI():
         return dydx, smaller_x
         
         
+    def JKR_fitmap_expt(self, force, sep, zsens):
+        # finds region of interest for JKR fit.
+        # defines region of interest as the region from where |slope| > 2stdev
+        # to where dF/ds changes sign
+        
+        dfdz, small_zsens = self.differentiation(force, zsens)
+        d2fdz2, small_zsens2 = self.differentiation(dfdz, small_zsens)
+        
+        #self.three_plots(zsens, force, small_zsens, dfdz, small_zsens2, d2fdz2)
+        
+        average, variance = self.flat_stats(dfdz)
+        
+        ##find where the tips starts to interact with the sample
+        right_limit = len(dfdz) - 1
+        number_of_outliers = 0
+        while number_of_outliers < DETECTION_LIMIT:
+            right_limit += -1
+            
+            if right_limit < 0:
+                number_of_outliers = DETECTION_LIMIT
+            elif dfdz[right_limit] > average + (variance**0.5)*DETECTION_LIMIT:
+                number_of_outliers += 1
+            else:
+                number_of_outliers = 0
+        
+        ##find where a breakthrough happens
+        left_limit = d2fdz2.index(min(d2fdz2))
+        
+        '''
+        left_limit = right_limit
+        number_of_outliers = 0
+        while number_of_outliers < int(DETECTION_LIMIT/2):
+            left_limit += -1
+            
+            try:
+                if dfdz[left_limit -1] < dfdz[left_limit]-variance**0.5:
+                    number_of_outliers += 1
+                else:
+                    number_of_outliers = 0
+        
+            except IndexError:
+                left_limit = 10
+                number_of_outliers = 3
+        
+        
+        
+        print "right",small_zsens[right_limit]
+        print "left",small_zsens[left_limit]
+        
+        plt.plot(small_zsens, dfdz)
+        plt.show()
+        '''
+        leftFitIndex = SLIDING_WINDOW_SIZE + left_limit + 1
+        rightFitIndex = SLIDING_WINDOW_SIZE*2 + right_limit + 1
+        
+        force_fit = []
+        sep_fit = []
+        for i in range(leftFitIndex, rightFitIndex):
+            force_fit.append(force[i])
+            sep_fit.append(sep[i])
+            
+        return force_fit, sep_fit
+        
         
     def JKR_fitmap(self, force, sep, zsens):
         # finds region of interest for JKR fit.
@@ -329,7 +432,9 @@ class FM_UI():
         while number_of_outliers < DETECTION_LIMIT:
             right_limit += -1
             
-            if dfdz[right_limit] > average + (variance**0.5)*DETECTION_LIMIT:
+            if right_limit < 0:
+                number_of_outliers = DETECTION_LIMIT
+            elif dfdz[right_limit] > average + (variance**0.5)*DETECTION_LIMIT:
                 number_of_outliers += 1
             else:
                 number_of_outliers = 0
@@ -337,13 +442,18 @@ class FM_UI():
         ##find where a breakthrough happens
         left_limit = right_limit
         number_of_outliers = 0
-        while number_of_outliers < DETECTION_LIMIT:
+        while number_of_outliers < int(DETECTION_LIMIT/2):
             left_limit += -1
             
-            if dfdz[left_limit -1] < dfdz[left_limit]-variance**0.5:
-                number_of_outliers += 1
-            else:
-                number_of_outliers = 0
+            try:
+                if dfdz[left_limit -1] < dfdz[left_limit]-variance**0.5:
+                    number_of_outliers += 1
+                else:
+                    number_of_outliers = 0
+        
+            except IndexError:
+                left_limit = 10
+                number_of_outliers = DETECTION_LIMIT
         
         
         '''
