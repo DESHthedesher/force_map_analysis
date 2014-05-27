@@ -1,0 +1,10 @@
+No Detect:
+
+Line0008Point0003  - min(d2y/dx2) too close to beginning of curve
+Line0018Point0030  - min(d2y/dx2) too close to beginning of curve
+Line0032Point0041  - min(d2y/dx2) too close to beginning of curve
+Line0024Point0018  - min(d2y/dx2) too close to beginning of curve
+
+Poor Ends:
+Line0019Point0003
+Line0021Point0030

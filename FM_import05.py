@@ -28,7 +28,7 @@ class FM_UI():
         curve_array = self.fmap_namer()
         
         for i in curve_array:
-            print "****analyzing ",i[0],"*****\n\n\n"
+            print "\n\n\n****analyzing ",i[0],"*****"
             defl = self.data_import(i[1])
             zsens = self.data_import(i[2])
             
@@ -39,11 +39,13 @@ class FM_UI():
                 force, sep = self.sep_and_force(defl, zsens)
                 force, sep = self.baseline_correct(force, sep)
                 force, sep = self.zero(force, sep)
-                #force_fit, sep_fit = self.JKR_fitmap(force, sep, zsens)
-                force_fit, sep_fit = self.JKR_fitmap_expt(force, sep, zsens)
-                plt.plot(sep, force)
-                plt.plot(sep_fit,force_fit)
-                plt.show()
+                force_fit, sep_fit = self.JKR_fitmap(force, sep, zsens)
+                
+                if len(force_fit) == 0:
+                    self.three_plots(force, zsens)
+                    plt.plot(sep, force)
+                    plt.plot(sep_fit,force_fit)
+                    plt.show()
                 
                 
 
@@ -263,10 +265,14 @@ class FM_UI():
             
         return newforce, newsep
         
-    def three_plots(self, x1, y1, x2, y2, x3, y3):
+    def three_plots(self, y1, x1):
         ##Normalizes and plots three things at once
         ##max[y] - min[y] = 1.0
-        print "plotting...."
+        print "Plotting...."
+        
+        y2, x2 = self.differentiation(y1, x1)
+        y3, x3 = self.differentiation(y2, x2)
+        
         
         a1 = 1.0/(max(y1)-min(y1))
         a2 = 1.0/(max(y2)-min(y2))
@@ -278,11 +284,11 @@ class FM_UI():
             
         norm_y2 = []
         for i in y2:
-            norm_y2.append(i*a2 + 0.2)
+            norm_y2.append(math.fabs(i*a2 + 0.2))
             
         norm_y3 = []
         for i in y3:
-            norm_y3.append(i*a3 + 1.3)
+            norm_y3.append(math.fabs(i*a3 + 1.3))
             
         norm_x1 = []
         for i in x1:
@@ -354,16 +360,13 @@ class FM_UI():
         return dydx, smaller_x
         
         
-    def JKR_fitmap_expt(self, force, sep, zsens):
+    def JKR_fitmap(self, force, sep, zsens):
         # finds region of interest for JKR fit.
         # defines region of interest as the region from where |slope| > 2stdev
         # to where dF/ds changes sign
         
         dfdz, small_zsens = self.differentiation(force, zsens)
         d2fdz2, small_zsens2 = self.differentiation(dfdz, small_zsens)
-        
-        #self.three_plots(zsens, force, small_zsens, dfdz, small_zsens2, d2fdz2)
-        
         average, variance = self.flat_stats(dfdz)
         
         ##find where the tips starts to interact with the sample
@@ -418,62 +421,7 @@ class FM_UI():
         return force_fit, sep_fit
         
         
-    def JKR_fitmap(self, force, sep, zsens):
-        # finds region of interest for JKR fit.
-        # defines region of interest as the region from where |slope| > 2stdev
-        # to where dF/ds changes sign
-        
-        dfdz, small_zsens = self.differentiation(force, zsens)
-        average, variance = self.flat_stats(dfdz)
-        
-        ##find where the tips starts to interact with the sample
-        right_limit = len(dfdz) - 1
-        number_of_outliers = 0
-        while number_of_outliers < DETECTION_LIMIT:
-            right_limit += -1
-            
-            if right_limit < 0:
-                number_of_outliers = DETECTION_LIMIT
-            elif dfdz[right_limit] > average + (variance**0.5)*DETECTION_LIMIT:
-                number_of_outliers += 1
-            else:
-                number_of_outliers = 0
-        
-        ##find where a breakthrough happens
-        left_limit = right_limit
-        number_of_outliers = 0
-        while number_of_outliers < int(DETECTION_LIMIT/2):
-            left_limit += -1
-            
-            try:
-                if dfdz[left_limit -1] < dfdz[left_limit]-variance**0.5:
-                    number_of_outliers += 1
-                else:
-                    number_of_outliers = 0
-        
-            except IndexError:
-                left_limit = 10
-                number_of_outliers = DETECTION_LIMIT
-        
-        
-        '''
-        print "right",small_zsens[right_limit]
-        print "left",small_zsens[left_limit]
-        
-        plt.plot(small_zsens, dfdz)
-        plt.show()
-        '''
-        leftFitIndex = SLIDING_WINDOW_SIZE + left_limit + 1
-        rightFitIndex = SLIDING_WINDOW_SIZE + right_limit + 1
-        
-        force_fit = []
-        sep_fit = []
-        for i in range(leftFitIndex, rightFitIndex):
-            force_fit.append(force[i])
-            sep_fit.append(sep[i])
-            
-        return force_fit, sep_fit
-        
+ 
     
             
 
