@@ -40,9 +40,9 @@ class FM_UI():
                 force, sep = self.zero(force, sep)
                 
         
-        self.JKR_fitmap(force, sep, zsens)
-        force_to_fit, sep_to_fit = self.JKR_fitmap(force, sep)
+        force_fit, sep_fit = self.JKR_fitmap(force, sep, zsens)
         plt.plot(sep, force)
+        plt.plot(sep_fit,force_fit)
         plt.show()
                    
 
@@ -323,22 +323,48 @@ class FM_UI():
         dfdz, small_zsens = self.differentiation(force, zsens)
         average, variance = self.flat_stats(dfdz)
         
-        left_limit = len(dfdz) - 1
-        
+        ##find where the tips starts to interact with the sample
+        right_limit = len(dfdz) - 1
         number_of_outliers = 0
-        while number_of_outliers < 3:
-            left_limit += -1
+        while number_of_outliers < DETECTION_LIMIT:
+            right_limit += -1
             
-            if dfdz[left_limit] > average + (variance**0.5)*DETECTION_LIMIT:
+            if dfdz[right_limit] > average + (variance**0.5)*DETECTION_LIMIT:
                 number_of_outliers += 1
             else:
                 number_of_outliers = 0
         
-        print small_zsens[left_limit]
+        ##find where a breakthrough happens
+        left_limit = right_limit
+        number_of_outliers = 0
+        while number_of_outliers < DETECTION_LIMIT:
+            left_limit += -1
+            
+            if dfdz[left_limit -1] < dfdz[left_limit]-variance**0.5:
+                number_of_outliers += 1
+            else:
+                number_of_outliers = 0
+        
+        
+        '''
+        print "right",small_zsens[right_limit]
+        print "left",small_zsens[left_limit]
         
         plt.plot(small_zsens, dfdz)
         plt.show()
-
+        '''
+        leftFitIndex = SLIDING_WINDOW_SIZE + left_limit + 1
+        rightFitIndex = SLIDING_WINDOW_SIZE + right_limit + 1
+        
+        force_fit = []
+        sep_fit = []
+        for i in range(leftFitIndex, rightFitIndex):
+            force_fit.append(force[i])
+            sep_fit.append(sep[i])
+            
+        return force_fit, sep_fit
+        
+    
             
 
 if __name__ == "__main__":
