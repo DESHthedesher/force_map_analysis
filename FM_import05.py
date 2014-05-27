@@ -40,6 +40,9 @@ class FM_UI():
                 force, sep = self.baseline_correct(force, sep)
                 force, sep = self.zero(force, sep)
                 force_fit, sep_fit = self.JKR_fitmap(force, sep, zsens)
+                plt.plot(sep, force)
+                plt.plot(sep_fit,force_fit)
+                plt.show()
                 
                 if len(force_fit) == 0:
                     self.three_plots(force, zsens)
@@ -391,6 +394,9 @@ class FM_UI():
             if d2fdz2[i] < left_limit:
                 left_limit = d2fdz2[i]
         left_limit = d2fdz2.index(left_limit)
+        
+        if len(d2fdz2) < right_limit:
+            self.three_plots(force, zsens)
         
         leftFitIndex = SLIDING_WINDOW_SIZE + left_limit + 1
         rightFitIndex = SLIDING_WINDOW_SIZE*2 + right_limit + 1
