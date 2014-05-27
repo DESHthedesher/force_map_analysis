@@ -48,6 +48,7 @@ class FM_UI():
                     plt.show()
                 
                 
+                
 
                    
 
@@ -377,38 +378,20 @@ class FM_UI():
             
             if right_limit < 0:
                 number_of_outliers = DETECTION_LIMIT
+                right_limit = 1
             elif dfdz[right_limit] > average + (variance**0.5)*DETECTION_LIMIT:
                 number_of_outliers += 1
             else:
                 number_of_outliers = 0
         
         ##find where a breakthrough happens
-        left_limit = d2fdz2.index(min(d2fdz2))
+        #left_limit = d2fdz2.index(min(d2fdz2))
+        left_limit = max(d2fdz2)
+        for i in range(0, min(right_limit, len(d2fdz2) - 1)):
+            if d2fdz2[i] < left_limit:
+                left_limit = d2fdz2[i]
+        left_limit = d2fdz2.index(left_limit)
         
-        '''
-        left_limit = right_limit
-        number_of_outliers = 0
-        while number_of_outliers < int(DETECTION_LIMIT/2):
-            left_limit += -1
-            
-            try:
-                if dfdz[left_limit -1] < dfdz[left_limit]-variance**0.5:
-                    number_of_outliers += 1
-                else:
-                    number_of_outliers = 0
-        
-            except IndexError:
-                left_limit = 10
-                number_of_outliers = 3
-        
-        
-        
-        print "right",small_zsens[right_limit]
-        print "left",small_zsens[left_limit]
-        
-        plt.plot(small_zsens, dfdz)
-        plt.show()
-        '''
         leftFitIndex = SLIDING_WINDOW_SIZE + left_limit + 1
         rightFitIndex = SLIDING_WINDOW_SIZE*2 + right_limit + 1
         
