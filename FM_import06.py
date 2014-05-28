@@ -13,9 +13,11 @@ from constants import *
 import LS_Regress
 import numpy as np
 import math
+import JKR
 
 ##build things
 LSR = LS_Regress.LS_Regress()      
+JKR = JKR.JKR()
 
 
 class FM_UI():
@@ -34,25 +36,44 @@ class FM_UI():
             
             #checks that the curve isn't crap
             if defl.index(max(defl)) > 200:   
+                #processes data 
                 defl, zsens = self.extend_readin(defl, zsens)
                 defl = self.invols_correct(defl, zsens)
                 force, sep = self.sep_and_force(defl, zsens)
                 force, sep = self.baseline_correct(force, sep)
                 force, sep = self.zero(force, sep)
-                force_fit, sep_fit = self.JKR_fitmap(force, sep, zsens)
                 
                 
-                if len(force_fit) < MIN_FIT_LENGTH:
+                ##fits the region of interest to the JKR model
+                force_fit, sep_fit, indent = self.JKR_fitmap(force, sep, zsens)
+                
+                if indent == True:
+                    print "indentation"
+                elif indent != True:
+                    print "no indentation"
+                
+                if MIN_FIT_LENGTH < len(force_fit) < 20*SLIDING_WINDOW_SIZE: 
+                    youngs_modulus = JKR.JKR_LS(sep, force, TIP_RADIUS, POISSON_RATIO)
+                    JKR_sep, JKR_force = JKR.JKR_gen(youngs_modulus, TIP_RADIUS, sep_fit ,POISSON_RATIO)
+                    print youngs_modulus
+                    plt.plot(sep, force)
+                    plt.plot(sep_fit,force_fit)
+                    plt.plot(JKR_sep, JKR_force)
+                    plt.show()
+                
+                
+                '''if len(force_fit) < MIN_FIT_LENGTH:
                     plt.plot(sep, force)
                     plt.plot(sep_fit,force_fit)
                     plt.show()
                     self.three_plots(force, zsens)
                 
-                elif len(force_fit) > 10*SLIDING_WINDOW_SIZE:
+                elif len(force_fit) > 20*SLIDING_WINDOW_SIZE:
                     plt.plot(sep, force)
                     plt.plot(sep_fit,force_fit)
                     plt.show()
-                    self.three_plots(force, zsens)
+                    self.three_plots(force, zsens)'''
+                
                 
 
                    
@@ -370,6 +391,7 @@ class FM_UI():
         # finds region of interest for JKR fit.
         # defines region of interest as the region from where |slope| > 2stdev
         # to where dF/ds changes sign
+        Indent_Detect = True
         
         dfdz, small_zsens = self.differentiation(force, zsens, SLIDING_WINDOW_SIZE)
         d2fdz2, small_zsens2 = self.differentiation(dfdz, small_zsens, SLIDING_WINDOW_SIZE)
@@ -406,6 +428,7 @@ class FM_UI():
         
         ## if the fit is too short, try using first derivative maximum to find it (no breakthrough)
         if rightFitIndex - leftFitIndex < MIN_FIT_LENGTH:
+            Indent_Detect = False
             left_limit = max(dfdz)
             tempLeftLimit = max(dfdz)
             
@@ -423,7 +446,7 @@ class FM_UI():
             force_fit.append(force[i])
             sep_fit.append(sep[i])
             
-        return force_fit, sep_fit
+        return force_fit, sep_fit, Indent_Detect
         
         
  
