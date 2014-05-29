@@ -28,36 +28,58 @@ class indentation_fits():
         
         force = []
         for i in fitx:
-            #force.append(1000*((4*E*(R**0.5))/(3*(1-a**2)))*(i**1.5))
-            new_force = (i**1.5)*((4.0/3.0)*E*R**0.5)/(3-3*a**2)
+            new_force = (i**1.5)*((R**0.5)*E*4)/(3*(1-a**2))
             force.append(new_force)
         
         return x, force
     
     
     ### finds the best young's modulus for a given approach profile
+    ### fits the data to this value and estimates a value for chi square (X2)
     ### x is distance, y is force, E is young's modulus, R is tip radius, a is poisson's ratio
     def JKR_LS(self,x,y,R,a):
 
-        newx = []
+        fitx = []
         for i in range(0, len(x)):
-            newx.append(math.fabs(x[i] - x[-1]))
+            fitx.append(math.fabs(x[i] - x[len(x)-1]))
             
         sumXY = 0.0
         sumXX = 0.0
+        sumXandHalf = 0.0
         
         for i in range(0, len(x)):
-            sumXX += newx[i]**3
-            sumXY += y[i]*(newx[i]**1.5)
+            sumXX += fitx[i]**3
+            sumXY += y[i]*(fitx[i]**1.5)
+            sumXandHalf += fitx[i]**1.5
             
-        nom = ((3*(1-a**2))/(4*R**0.5))
-        denom = (sumXY/sumXX)
-        E = nom/denom
-        return E
+        A = 4*(R**0.5)/(3*(1-a**2))
+        E = sumXY/(sumXX*A)
+        
+        #generate a fit based on calculated E
+        fitforce = []
+        for i in fitx:
+            new_force = (i**1.5)*((R**0.5)*E*4)/(3*(1-a**2))
+            fitforce.append(new_force)
+
+        #calculate the average variance for the sample
+        s2 = 0.0
+        for i in range(0, len(y)):
+            s2 += (y[i] - fitforce[i])**2
+        
+        s2 = s2/(len(y)- 2)
+
+        #calculate the error in E
+        Se = 0.0
+        for i in fitx:
+            Se += (sumXandHalf/sumXX)**2
+        Se = ((Se*s2)/A)**0.5
+       
+        
+        return E,Se
     
     ##generates a coulmbic fit profile
     def coulomb_gen(self, r, q):
-        ke = 8.987*10**9 ##coulomb's constant, N/m^2*C^2
+        ke = 8.9875517873681764*10**9 ##coulomb's constant, N/m^2*C^2
         
         coulombic_force = []
         for i in range(0, len(r)):
@@ -68,16 +90,17 @@ class indentation_fits():
     ###finds the best |charge|(q) to fit the coulombic expression with
     ###assumes |charge| on each body is the same 
     def coulomb_LS(self,r,F):
-        ke = 8.987*10**9 ##coulomb's constant, N/m^2*C^2
+        ke = 8.9875517873681764*10**9 ##coulomb's constant, N/m^2*C^2
+
         
         sumrf = 0.0
         sumrr = 0.0
         
         for i in range(0, len(F)):
-            sumrf += (F[i]**2)/(r[i]**2)
+            sumrf += (F[i])/(r[i]**2)
             sumrr += 1.0/(r[i]**4)
             
-        q = (ke*sumrf/sumrr)**0.5
+        q = ((1/ke)*(sumrf/sumrr))**0.5
         
         return q
         

@@ -52,36 +52,25 @@ class FM_UI():
                 elif indent != True:
                     print "no indentation"
                 
-                if MIN_FIT_LENGTH < len(force_fit) < 20*SLIDING_WINDOW_SIZE: 
-                    youngs_modulus = indF.JKR_LS(sep, force, TIP_RADIUS, POISSON_RATIO)
-                    JKR_sep, JKR_force = indF.JKR_gen(2*10**6, TIP_RADIUS, sep_fit ,POISSON_RATIO)
-                    
+                if MIN_FIT_LENGTH < len(force_fit) < 20*SLIDING_WINDOW_SIZE:
+                #if len(force_fit) > 15*SLIDING_WINDOW_SIZE:
+                    youngs_modulus, Eerr = indF.JKR_LS(sep_fit, force_fit, TIP_RADIUS, POISSON_RATIO)
+                    JKR_sep, JKR_force = indF.JKR_gen(youngs_modulus, TIP_RADIUS, sep_fit ,POISSON_RATIO)
+                    JKR_Chi2 = LSR.ChiSquare_UnkownErr(force_fit, JKR_force, 3)
+          
                     q = indF.coulomb_LS(sep_fit, force_fit)
-                    cool_sep, cool_force = indF.coulomb_gen(sep_fit, 0.5*10**-18)
+                    cool_sep, cool_force = indF.coulomb_gen(sep_fit, q)
                     
-                    print "E = ",youngs_modulus
-                    print "q = ",q
+                    print "E =",youngs_modulus," +/- =",Eerr
+                    print "Chi2 =",JKR_Chi2
                     plt.plot(sep, force)
                     plt.plot(sep_fit,force_fit)
+                    #print "q =",q
                     #plt.plot(cool_sep, cool_force)
                     plt.plot(JKR_sep, JKR_force)
                     plt.show()
                 
                 
-                '''if len(force_fit) < MIN_FIT_LENGTH:
-                    plt.plot(sep, force)
-                    plt.plot(sep_fit,force_fit)
-                    plt.show()
-                    self.three_plots(force, zsens)
-                
-                elif len(force_fit) > 20*SLIDING_WINDOW_SIZE:
-                    plt.plot(sep, force)
-                    plt.plot(sep_fit,force_fit)
-                    plt.show()
-                    self.three_plots(force, zsens)'''
-                
-                
-
                    
 
     #gets names of all complete ibw files in the folder

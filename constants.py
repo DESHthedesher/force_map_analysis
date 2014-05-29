@@ -12,6 +12,8 @@ PATH_TO_OUTFILE = "/data/results"
 #relating to hard data
 SPRING_CONSTANT = 21.18*10**-3   #N/m
 INVOLS = 138.63 #Defl InVols, nm/V
+TIP_RADIUS = 15*10**-9 #m this is primarily for indentation measurements.
+POISSON_RATIO = 0.5 #for JKR fits
 
 #relating to data analysis parameters
 LEFT_TAIL_LIMIT = 0.75 #point the closest to the surface you trust the tip not to interact with the surface

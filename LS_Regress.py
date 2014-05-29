@@ -17,6 +17,37 @@ class LS_Regress():
     ###takes x, y, and a list of the indexes for the points to be fitted
     ###returns intercept, slope
     
+    
+    def fit_variance(self, realY, fitY, Nparams):
+        
+        s2 = 0.0
+        for i in range(0, len(realY) - 1):
+            s2 += (realY[i] - fitY[i])**2
+        
+        s2 = s2/(len(realY)- 1 - Nparams)
+    
+        return s2
+    
+    #calculates Chi square for data with a given fit and variance
+    def ChiSquare(self, realy, fity, variance):
+        
+        X2 = 0.0
+        for i in range(0, len(variance) - 1):
+            X2 += ((realy[i]-fity[i])**2)/variance[i]
+        
+        return X2
+       
+    #calculates Chi Square for data with a given fit and unknown variance   
+    def ChiSquare_UnkownErr(self, realy, fity, Nparams):
+        
+        v = self.fit_variance(realy, fity, Nparams)
+        variance = []
+        for i in range(0, len(realy) - 1):
+            variance.append(v)
+            
+        X2 = self.ChiSquare(realy, fity, variance)
+        return X2
+    
     def linefit_noError(self, x, y, indexlist):
         sumx = 0.0
         sumy = 0.0
