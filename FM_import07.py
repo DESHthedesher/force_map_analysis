@@ -60,19 +60,23 @@ class FM_UI():
                     print "no indentation"
                 
                 if MIN_FIT_LENGTH < len(force_fit) < 20*SLIDING_WINDOW_SIZE:
-                #if len(force_fit) > 15*SLIDING_WINDOW_SIZE:
+                    ##sneddon model
                     youngs_modulus, Eerr = indF.JKR_LS(reduced_sep, reduced_force, TIP_RADIUS, POISSON_RATIO)
                     JKR_sep, JKR_force = indF.JKR_gen(youngs_modulus, TIP_RADIUS, reduced_sep ,POISSON_RATIO)
                     
-                    x = np.arange(0, 10)
-                    
-                    k = -1/(0.006*10**-6)
-                    A, b = indF.Exponent1_LS(reduced_sep, reduced_force, k)
-                    exp_sep, exp_force = indF.Exponent_gen(reduced_sep,A,b, k)
+                    ##simple exponential
+                    A, b = indF.Exponent1_LS(reduced_sep, reduced_force, -1*DEBYE_LENGTH)
+                    exp_sep, exp_force = indF.Exponent_gen(reduced_sep,A,b, -1*DEBYE_LENGTH)
                     print "A", A
           
+                    ##coulombic
                     q = indF.coulomb_LS(sep_fit, force_fit)
                     cool_sep, cool_force = indF.coulomb_gen(sep_fit, q)
+                    
+                    ##DLVO
+                    phi, theta = indF.simplified_DLVO_LS(sep_fit, force_fit, DEBYE_LENGTH)
+                    DLVO_force = indF.simplified_DLVO_gen(DEBYE_LENGTH, sep_fit, theta, phi)
+                    print "phi =", phi, "theta =", theta
                     
                     print "E =",youngs_modulus," +/- =",Eerr
                     plt.plot(sep, force)
@@ -80,7 +84,8 @@ class FM_UI():
                     #print "q =",q
                     #plt.plot(cool_sep, cool_force)
                     #plt.plot(JKR_sep, JKR_force)
-                    plt.plot(exp_sep, exp_force)
+                    #plt.plot(exp_sep, exp_force)
+                    plt.plot(sep_fit, DLVO_force)
                     plt.show()
                 
                 

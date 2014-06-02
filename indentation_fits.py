@@ -134,7 +134,41 @@ class indentation_fits():
         q = ((1/ke)*(sumrf/sumrr))**0.5
         
         return q
+
+
+    ###y is the data, VdW is from van der waals, EDL is from electric double layer
+    def simplified_DLVO_LS(self, x, y, debye_length):
+        e = 2.71828
         
+        sumyVdW = 0.0
+        sumVdWEDL = 0.0
+        sumyEDL = 0.0
+        sumEDLEDL = 0.0
+        sumVdWVdW = 0.0
+        
+        for i in range(0, len(x) - 1):
+            sumyVdW += y[i]*(1/(x[i]**2))
+            sumVdWEDL += (1/(x[i]**2))*e**-(debye_length*x[i])
+            sumyEDL += y[i]*e**-(debye_length*x[i])
+            sumEDLEDL += (e**-(2*debye_length*x[i]))
+            sumVdWVdW += (1/(x[i]**4))
+            
+        phi = (sumEDLEDL*sumyVdW - sumVdWEDL*sumyEDL)/(sumVdWEDL**2 - sumEDLEDL*sumVdWVdW)
+        theta = (sumyEDL + phi*sumVdWEDL)/(sumEDLEDL)
+        
+        return phi, theta
+        
+        
+    
+    def simplified_DLVO_gen(self, debye_length, distance, theta, phi):
+        e = 2.71828
+        
+        DLVO_forces = []
+        for i in distance:
+            nDLVO = theta*e**(-debye_length*i) - phi/(i**2)
+            DLVO_forces.append(nDLVO)
+            
+        return DLVO_forces
         
 
 if __name__ == "__main__":
