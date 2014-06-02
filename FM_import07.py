@@ -44,8 +44,8 @@ class FM_UI():
                 force, sep = self.zero(force, sep)
                 
                 
-                ##fits the region of interest to the JKR model
-                force_fit, sep_fit, indent = self.JKR_fitmap(force, sep, zsens)
+                ##fits the region of interest to the model
+                force_fit, sep_fit, indent = self.JKR_fitmap(force, sep, zsens, FIT_THE_DROP)
                 reduced_force = []
                 reduced_sep = []
                 for i in range(0, len(force_fit)):
@@ -400,10 +400,11 @@ class FM_UI():
         return dydx, smaller_x
         
         
-    def JKR_fitmap(self, force, sep, zsens):
+    def JKR_fitmap(self, force, sep, zsens, fitregion):
         # finds region of interest for JKR fit.
         # defines region of interest as the region from where |slope| > 2stdev
         # to where dF/ds changes sign
+        # fit the drop indicates that you want to fit the region where force begins to drop
         Indent_Detect = True
         
         dfdz, small_zsens = self.differentiation(force, zsens, SLIDING_WINDOW_SIZE)
@@ -435,7 +436,10 @@ class FM_UI():
         
         
         ##add some borders to the fits so that they are in region of interest only        
-        leftFitIndex = SLIDING_WINDOW_SIZE*3 + left_limit + 1
+        if fitregion == True:
+            leftFitIndex = SLIDING_WINDOW_SIZE*2 + left_limit + 1
+        elif fitregion == False:
+            leftFitIndex = SLIDING_WINDOW_SIZE*3 + left_limit + 1
         rightFitIndex = SLIDING_WINDOW_SIZE*2 + right_limit + 1
         
         
