@@ -18,6 +18,37 @@ class indentation_fits():
         
         print "all good"
 
+    def Exponent_gen(self, x, A, b, k):
+        e = 2.71828
+        
+        fity = []
+        for i in x:
+            fity.append(A*e**(k*i) + b)
+
+        return x, fity
+        
+
+    ###fits to the equation y = Ae^kx, assuming k is known
+    def Exponent1_LS(self, x, y, k):
+        e = 2.71828
+        
+        sumxy = 0.0
+        sumxx = 0.0
+        sumx = 0.0
+        sumy = 0.0
+        
+        for i in range(0, len(x) - 1):
+            sumx += e**(k*x[i])
+            sumxy += y[i]*e**(k*x[i])
+            sumxx += e**(2*k*x[i])
+            sumy += y[i]
+            
+        b = (sumy*sumxx - sumxy*sumx)/((len(x)-1)*sumxx - sumx**2)
+        A = (sumxy - b*sumx)/sumxx
+        
+        return A, b
+        
+
     ###generates an idealized force distance profile based on the JKR contact
     ###model, using the parameters given
     def JKR_gen(self, E, R, x, a):

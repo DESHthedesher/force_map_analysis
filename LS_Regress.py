@@ -38,7 +38,8 @@ class LS_Regress():
         return X2
        
     #calculates Chi Square for data with a given fit and unknown variance   
-    def ChiSquare_UnkownErr(self, realy, fity, Nparams):
+    #this is not right
+    def ChiSquare_UnknownErr(self, realy, fity, Nparams):
         
         v = self.fit_variance(realy, fity, Nparams)
         variance = []

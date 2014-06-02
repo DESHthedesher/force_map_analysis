@@ -46,6 +46,13 @@ class FM_UI():
                 
                 ##fits the region of interest to the JKR model
                 force_fit, sep_fit, indent = self.JKR_fitmap(force, sep, zsens)
+                reduced_force = []
+                reduced_sep = []
+                for i in range(0, len(force_fit)):
+                    reduced_force.append(force_fit[i])
+                    reduced_sep.append(sep_fit[i])
+                    
+                
                 
                 if indent == True:
                     print "indentation"
@@ -54,20 +61,26 @@ class FM_UI():
                 
                 if MIN_FIT_LENGTH < len(force_fit) < 20*SLIDING_WINDOW_SIZE:
                 #if len(force_fit) > 15*SLIDING_WINDOW_SIZE:
-                    youngs_modulus, Eerr = indF.JKR_LS(sep_fit, force_fit, TIP_RADIUS, POISSON_RATIO)
-                    JKR_sep, JKR_force = indF.JKR_gen(youngs_modulus, TIP_RADIUS, sep_fit ,POISSON_RATIO)
-                    JKR_Chi2 = LSR.ChiSquare_UnkownErr(force_fit, JKR_force, 3)
+                    youngs_modulus, Eerr = indF.JKR_LS(reduced_sep, reduced_force, TIP_RADIUS, POISSON_RATIO)
+                    JKR_sep, JKR_force = indF.JKR_gen(youngs_modulus, TIP_RADIUS, reduced_sep ,POISSON_RATIO)
+                    
+                    x = np.arange(0, 10)
+                    
+                    k = -1/(0.006*10**-6)
+                    A, b = indF.Exponent1_LS(reduced_sep, reduced_force, k)
+                    exp_sep, exp_force = indF.Exponent_gen(reduced_sep,A,b, k)
+                    print "A", A
           
                     q = indF.coulomb_LS(sep_fit, force_fit)
                     cool_sep, cool_force = indF.coulomb_gen(sep_fit, q)
                     
                     print "E =",youngs_modulus," +/- =",Eerr
-                    print "Chi2 =",JKR_Chi2
                     plt.plot(sep, force)
                     plt.plot(sep_fit,force_fit)
                     #print "q =",q
                     #plt.plot(cool_sep, cool_force)
-                    plt.plot(JKR_sep, JKR_force)
+                    #plt.plot(JKR_sep, JKR_force)
+                    plt.plot(exp_sep, exp_force)
                     plt.show()
                 
                 
