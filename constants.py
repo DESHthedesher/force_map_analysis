@@ -14,9 +14,9 @@ SPRING_CONSTANT = 21.18*10**-3   #N/m
 INVOLS = 138.63 #Defl InVols, nm/V
 
 #fit constants
-TIP_RADIUS = 15*10**-9 #m this is primarily for indentation measurements.
+TIP_RADIUS = 25*10**-9 #m this is primarily for indentation measurements.
 POISSON_RATIO = 0.5 #for JKR fits
-DEBYE_LENGTH = 1/(960*10**-9) #for Double Layer fits.
+DEBYE_LENGTH = 1/(500*10**-9) #for Double Layer fits.
 HAMAKER_CONSTANT = 2*10**-20
 
 

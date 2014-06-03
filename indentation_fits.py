@@ -5,6 +5,7 @@ Created on Sat May 17 12:36:51 2014
 @author: Duncan
 """
 import math
+import numpy as np
 from matplotlib import pyplot as plt
 
 class indentation_fits():
@@ -170,6 +171,65 @@ class indentation_fits():
             
         return DLVO_forces
         
+        
+    ### Takes x and y as surface separation and force to solve for constants from DLVO theory.    
+    ### Uses determinants to compute the constants for the equation
+    ### F = c1 + c2*x**-2 + c3*e**-kx
+    ##
+    ## A11  A12  A13   c1    y1
+    ## A21  A22  A23 x c2 =  y2
+    ## A31  A32  A33   c3    y3
+    ##
+    ## This matrix is symmetric
+    def Nonzeroed_DLVO_LS(self, x, y, debye_length):
+        e= 2.71828
+        
+        A11 = 0.0
+        A22 = 0.0
+        A33 = 0.0
+        A12 = 0.0
+        A13 = 0.0
+        A23 = 0.0
+        y1 = 0.0
+        y2 = 0.0
+        y3 = 0.0
+        
+        for i in range(0, len(x) - 1):
+            A11 += 1.0
+            A22 += 1.0/(x[i]**4)
+            A33 += e**(-2*debye_length*x[i])
+            A12 += 1/(x[i]**2)
+            A13 += e**(-1*debye_length*x[i])
+            A23 += (e**(-1*debye_length*x[i]))/(x[i]**2)
+            y1 += y[i]
+            y2 += y[i]/(x[i]**2)
+            y3 += y[i]*e**(-debye_length*x[i])
+        
+        A21 = A12
+        A31 = A13
+        A32 = A23
+
+        Mdelta = [[A11, A12, A13],[A21, A22, A23],[A31, A32, A33]] 
+        Mc1 = [[y1, y2, y3],[A21, A22, A23],[A31, A32, A33]] 
+        Mc2 = [[A11, A12, A13],[y1, y2, y3],[A31, A32, A33]]
+        Mc3 = [[A11, A12, A13],[A21, A22, A23],[y1, y2, y3]] 
+        
+        delta = np.linalg.det(Mdelta)
+        c1 = (np.linalg.det(Mc1))/delta
+        c2 = (np.linalg.det(Mc2))/delta
+        c3 = (np.linalg.det(Mc3))/delta
+        
+        return c1, c2, c3
+    
+    def Nonzeroed_DLVO_gen(self, x, c1, c2, c3, debye_length):
+        e = 2.71828
+        
+        DLVO_forces = []
+        for i in x:
+            thisForce = c1 + c2*i**-2 + c3*e**(-debye_length*i)
+            DLVO_forces.append(thisForce)
+         
+        return DLVO_forces
 
 if __name__ == "__main__":
     indentation_fits(None)

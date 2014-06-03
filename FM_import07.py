@@ -67,8 +67,7 @@ class FM_UI():
                     ##simple exponential
                     A, b = indF.Exponent1_LS(reduced_sep, reduced_force, -1*DEBYE_LENGTH)
                     exp_sep, exp_force = indF.Exponent_gen(reduced_sep,A,b, -1*DEBYE_LENGTH)
-                    print "A", A
-          
+
                     ##coulombic
                     q = indF.coulomb_LS(sep_fit, force_fit)
                     cool_sep, cool_force = indF.coulomb_gen(sep_fit, q)
@@ -76,7 +75,11 @@ class FM_UI():
                     ##DLVO
                     phi, theta = indF.simplified_DLVO_LS(sep_fit, force_fit, DEBYE_LENGTH)
                     DLVO_force = indF.simplified_DLVO_gen(DEBYE_LENGTH, sep_fit, theta, phi)
-                    print "phi =", phi, "theta =", theta
+                    c1, c2, c3 = indF.Nonzeroed_DLVO_LS(sep_fit, force_fit, DEBYE_LENGTH)
+                    DLVO2_force = indF.Nonzeroed_DLVO_gen(sep_fit, c1,c2,c3,DEBYE_LENGTH)
+                    print "A =", c2*6.0/TIP_RADIUS
+                    print "Z =", c3/(TIP_RADIUS*DEBYE_LENGTH)
+                    print "1/k =", 1/DEBYE_LENGTH
                     
                     print "E =",youngs_modulus," +/- =",Eerr
                     plt.plot(sep, force)
@@ -86,6 +89,7 @@ class FM_UI():
                     #plt.plot(JKR_sep, JKR_force)
                     #plt.plot(exp_sep, exp_force)
                     plt.plot(sep_fit, DLVO_force)
+                    plt.plot(sep_fit, DLVO2_force)
                     plt.show()
                 
                 
