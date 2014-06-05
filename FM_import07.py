@@ -88,7 +88,7 @@ class FM_UI():
                     #plt.plot(cool_sep, cool_force)
                     #plt.plot(JKR_sep, JKR_force)
                     #plt.plot(exp_sep, exp_force)
-                    plt.plot(sep_fit, DLVO_force)
+                    #plt.plot(sep_fit, DLVO_force)
                     plt.plot(sep_fit, DLVO2_force)
                     plt.show()
                 
